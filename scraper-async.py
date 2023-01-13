@@ -1,8 +1,12 @@
+import aiohttp
+import asyncio
 import time
-import requests
+import os
 from bs4 import BeautifulSoup
 
 URL = 'https://www.10000recipe.com/recipe'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Whale/3.18.154.7 Safari/537.36'}
 
 
 def parse_list(html):
@@ -29,30 +33,32 @@ def parse_recipe(html):
         pass
 
 
-def fetch(session, url):
-    with session.get(url) as response:
-        html = response.text
+async def fetch(session, url):
+    async with session.get(url, headers=headers) as response:
+        html = await response.text()
         urls = parse_list(html)
-        results = [fetch_recipe(session, url) for url in urls]
+        results = await asyncio.gather(*[fetch_recipe(session, url) for url in urls])
         return results
 
 
-def fetch_recipe(session, url):
-    with session.get(url) as response:
-        html = response.text
+async def fetch_recipe(session, url):
+    async with session.get(url, headers=headers) as response:
+        html = await response.text()
         recipe = parse_recipe(html)
         return recipe
 
 
-def search(keyword, page_number):
+async def search(keyword, page_number):
     urls = [f"{URL}/list.html?q={keyword}&order=reco&page={page}" for page in range(
         1, page_number+1)]
-    with requests.Session() as session:
-        results = [fetch(session, url) for url in urls]
+    async with aiohttp.ClientSession() as session:
+        results = await asyncio.gather(*[fetch(session, url) for url in urls])
+        # print(results)
 
 
 if __name__ == '__main__':
     start = time.time()
-    search("김치찌개", 1)
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.run(search("김치찌개", 10))
     end = time.time()
-    print("시간", end-start)  # 21초
+    print("시간", end-start)  #

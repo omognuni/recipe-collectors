@@ -1,8 +1,14 @@
 import time
+import aiohttp
+import os
+import asyncio
 import requests
+from multiprocessing import Pool, cpu_count
 from bs4 import BeautifulSoup
 
 URL = 'https://www.10000recipe.com/recipe'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Whale/3.18.154.7 Safari/537.36'}
 
 
 def parse_list(html):
@@ -30,7 +36,7 @@ def parse_recipe(html):
 
 
 def fetch(session, url):
-    with session.get(url) as response:
+    with session.get(url, headers=headers) as response:
         html = response.text
         urls = parse_list(html)
         results = [fetch_recipe(session, url) for url in urls]
@@ -38,7 +44,7 @@ def fetch(session, url):
 
 
 def fetch_recipe(session, url):
-    with session.get(url) as response:
+    with session.get(url, headers=headers) as response:
         html = response.text
         recipe = parse_recipe(html)
         return recipe
@@ -47,12 +53,16 @@ def fetch_recipe(session, url):
 def search(keyword, page_number):
     urls = [f"{URL}/list.html?q={keyword}&order=reco&page={page}" for page in range(
         1, page_number+1)]
+    pool = Pool(cpu_count())
     with requests.Session() as session:
-        results = [fetch(session, url) for url in urls]
+        results = pool.starmap_async(
+            fetch, [(session, url) for url in urls])
+        print(len(results.get()))
+    pool.close()
 
 
 if __name__ == '__main__':
     start = time.time()
-    search("김치찌개", 1)
+    search("김치찌개", 10)
     end = time.time()
-    print("시간", end-start)  # 21초
+    print("시간", end-start)  # 초
