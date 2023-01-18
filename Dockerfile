@@ -1,7 +1,7 @@
 FROM python:3.9-alpine3.13
 LABEL maintainer='Omognuni'
 
-ENV PYHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED 1
 
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./app /app
@@ -18,8 +18,11 @@ RUN python -m venv /py && \
     adduser \
     --disabled-password \
     --no-create-home \
-    django-user
+    django-user &&\
+    mkdir -p /vol/celery && \
+    chown -R django-user:django-user /vol/celery && \
+    chmod -R 777 /vol/celery
 
-ENV PATH="/scripts:/py/bin:$PATH"
+ENV PATH="/py/bin:$PATH"
 
 USER django-user
