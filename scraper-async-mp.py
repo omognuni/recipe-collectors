@@ -61,6 +61,6 @@ async def search(keyword, page_number):
 if __name__ == '__main__':
     start = time.time()
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.run(search("김치찌개", 10))
+    asyncio.run(search("김치찌개", 5))
     end = time.time()
     print("시간", end-start)  # 20초

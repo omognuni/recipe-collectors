@@ -79,8 +79,13 @@ WSGI_APPLICATION = 'recipecollector.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': os.environ.get('DB_NAME'),
+        'CLIENT': {
+            'username': os.environ.get('DB_USER'),
+            'password': os.environ.get('DB_PASS'),
+            'host': os.environ.get('DB_HOST'),
+        }
     }
 }
 
@@ -129,6 +134,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Celery
 CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq'
 CELERY_RESULT_BACKEND = 'django-db'
+CELERY_MONGODB_BACKENT_SETTINGS = {
+    'username': os.environ.get('DB_USER'),
+    'password': os.environ.get('DB_PASS'),
+    'host': os.environ.get('DB_HOST'),
+    'database': os.environ.get('DB_NAME')
+}
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

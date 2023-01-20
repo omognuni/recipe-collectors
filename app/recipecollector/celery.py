@@ -11,8 +11,3 @@ app = Celery('recipecollector')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 app.autodiscover_tasks()
-
-
-@app.task(bind=True)
-def printTime():
-    print("testtime:", datetime.now())
