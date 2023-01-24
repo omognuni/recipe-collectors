@@ -24,11 +24,16 @@ def parse_recipe(html):
         title = soup.find('div', class_='view2_summary').find('h3').text
         ingredients = soup.find(
             'div', class_='ready_ingre3').find_all('li')
-        res = []
+        process = soup.find_all('div', 'view_step_cont')
+        process_res = ''
+        for n in process:
+            process_res += n.get_text().replace('\t', '').replace('\n', ' ').strip(' ')
+
+        ing_res = []
         for ingredient in ingredients:
-            res.append(ingredient.get_text().replace(
+            ing_res.append(ingredient.get_text().replace(
                 '\n', '').replace(' ', '').replace('구매', ','))
-        return {title: res}
+        return {'title': title, 'process': process_res, 'ingredients': ing_res}
     except AttributeError:
         pass
 
@@ -61,6 +66,6 @@ async def search(keyword, page_number):
 if __name__ == '__main__':
     start = time.time()
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.run(search("김치찌개", 5))
+    asyncio.run(search("김치찌개", 2))
     end = time.time()
     print("시간", end-start)  # 20초

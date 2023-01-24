@@ -13,4 +13,5 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     index = models.PositiveBigIntegerField(unique=True)
     title = models.CharField(max_length=300)
+    process = models.TextField(default='')
     ingredients = models.ArrayField(model_container=Ingredient)
