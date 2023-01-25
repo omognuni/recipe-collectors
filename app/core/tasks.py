@@ -1,5 +1,5 @@
 from celery import shared_task, group
-
+from django.db.utils import DatabaseError
 import requests
 import re
 from datetime import datetime
@@ -25,11 +25,12 @@ def get_recipe_url(urls):
 @shared_task
 def save_recipe(results):
     for res in results:
-        if not res:
-            continue
-        recipe = Recipe.objects.create(
-            index=res['index'], title=res['title'], process=res['process'], ingredients=res['ingredients'])
-        recipe.save()
+        try:
+            recipe = Recipe.objects.create(
+                index=res['index'], title=res['title'], process=res['process'], ingredients=res['ingredients'])
+            recipe.save()
+        except (DatabaseError, IndexError):
+            pass
     return True
 
 
