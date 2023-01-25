@@ -9,32 +9,27 @@ services:
     volumes:
       - ./app:/app
     command: >
-      sh -c "
-            python manage.py migrate --fake django_celery_results 0006
-            python manage.py migrate &&
+      sh -c "python manage.py migrate &&
             python manage.py runserver 0.0.0.0:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
-      - DB_HOST=mongodb://mongodb:27017
+      - DB_HOST=recipecollector-db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - DB_PORT=5432
       - DEBUG=1
     depends_on:
-      - mongodb
+      - recipecollector-db
 
-  mongodb:
-    image: mongo
-    restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=devuser
-      - MONGO_INITDB_ROOT_PASSWORD=changeme
-      - MONGO_INITDB_DATABASE=devdb
-    ports:
-      - 27017:27017
+  recipecollector-db:
+    image: postgres:13-alpine
     volumes:
-      - dev-db-data:/data/db
-
+      - recipe-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=devdb
+      - POSTGRES_USER=devuser
+      - POSTGRES_PASSWORD=changeme
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3.7-alpine
@@ -60,7 +55,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq/
-      - DB_HOST=mongodb://mongodb:27017
+      - DB_HOST=recipecollector-db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
@@ -78,7 +73,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq/
-      - DB_HOST=mongodb://mongodb:27017
+      - DB_HOST=recipecollector-db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
@@ -89,4 +84,6 @@ services:
     command: sh -c "celery -A recipecollector beat -s /vol/celery/celerybeat-schedule --loglevel=info"
 
 volumes:
-  dev-db-data:
+  recipe-db-data:
+
+
