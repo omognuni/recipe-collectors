@@ -11,7 +11,11 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    index = models.PositiveBigIntegerField(unique=True)
+    index = models.PositiveBigIntegerField()
     title = models.CharField(max_length=300)
     process = models.TextField(default='')
     ingredients = models.ArrayField(model_container=Ingredient)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=['index'], name='one_recipe')]
