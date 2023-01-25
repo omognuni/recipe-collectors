@@ -1,6 +1,6 @@
 from core.tasks import *
 import time
-from celery import chain, group
+from celery import group
 
 URL = 'https://www.10000recipe.com/recipe'
 
