@@ -3,7 +3,7 @@ from django.db.utils import DatabaseError
 import requests
 import re
 from datetime import datetime
-from .models import Recipe
+from core.models import *
 from bs4 import BeautifulSoup
 
 URL = 'https://www.10000recipe.com/recipe'
@@ -27,9 +27,13 @@ def save_recipe(results):
     for res in results:
         try:
             recipe = Recipe.objects.create(
-                index=res['index'], title=res['title'], process=res['process'], ingredients=res['ingredients'])
+                index=res['index'], title=res['title'], process=res['process'])
             recipe.save()
-        except (DatabaseError, IndexError):
+            ingredients = res['ingredients']
+            for ing in ingredients:
+                ingredient = Ingredient.objects.create(recipe=recipe, **ing)
+                ingredient.save()
+        except (DatabaseError, TypeError):
             pass
     return True
 
