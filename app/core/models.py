@@ -15,6 +15,11 @@ class Recipe(models.Model):
     index = models.CharField(max_length=1000, unique=True)
     title = models.CharField(max_length=300)
     process = models.TextField(default='')
+    tags = models.ManyToManyField('Tag')
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=100, unique=True)
 
 
 class UserManager(BaseUserManager):
