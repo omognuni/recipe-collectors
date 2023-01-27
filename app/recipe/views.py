@@ -27,6 +27,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return [f"{url}/list.html?q={tag}&order=reco&page={p}" for p in range(start, page+3)]
 
     def _run_celery_task(self, tag, start, page):
+        '''Celery task 실행'''
         urls = self._url(tag, start, page)
         recipe_urls = get_recipe_url.delay(urls)
         indexes = recipe_urls.get()
@@ -43,10 +44,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         keyword = self.request.query_params.get('search')
+        # 페이지 없이 검색할 시 기본값으로 1
         page = int(self.request.query_params.get('page', 1))
         if not keyword:
             return self.queryset
         queryset = self.queryset.filter(tags__name=keyword)
+        # queryset 크기가 page*page_size보다 작을 경우 부족한 만큼의 페이지 가져오기
         start = len(queryset) // RecipePagination.page_size
         if start >= page:
             return queryset

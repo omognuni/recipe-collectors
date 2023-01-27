@@ -27,6 +27,7 @@ class PrivateAPITest(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_retrieve_recipe(self):
+        '''레시피 가져오기 테스트'''
         create_recipe()
         create_recipe(index='2')
 
@@ -42,6 +43,7 @@ class PrivateAPITest(TestCase):
     @patch('core.tasks.get_recipe_url.delay')
     @patch('core.tasks.save_recipe.delay')
     def test_search_recipe(self, save_recipe, get_recipe_url, group):
+        '''검색한 레시피 반환 테스트'''
         recipe = create_recipe()
         tag = Tag.objects.create(name='test')
         Ingredient.objects.create(

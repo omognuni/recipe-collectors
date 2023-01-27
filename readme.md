@@ -13,7 +13,7 @@
   - api/v1/recipes/?search={keyword}&page={page}
 - 레시피 사이트에서 검색한 단어와 page 번호만큼 크롤링
   - **Celery**를 이용하여 **requests를 요청 및 저장**하는 부분은 **비동기 수행**
-  - 가져온 **html을 파싱하는 과정**은 celery group을 이용하여 **병렬 수행**
+  - 가져온 **html을 파싱하는 과정**은 **celery group**을 이용하여 **병렬 수행**
 - 검색한 keyword는 **레시피와 다대다(ManyToMany) 관계로 저장**하여 **같은 단어로 검색 시 저장된 데이터를 먼저 불러온다.**
 - 1 page 당 검색되는 레시피의 수는 **40개**로 제한
 

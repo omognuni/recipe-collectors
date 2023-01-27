@@ -14,6 +14,7 @@ headers = {
 
 @shared_task
 def get_recipe_url(urls):
+    '''레시피 목록에서 각 레시피 url 가져오기'''
     result = []
     for url in urls:
         try:
@@ -27,6 +28,7 @@ def get_recipe_url(urls):
 
 @shared_task
 def save_recipe(results, tag):
+    '''크롤링한 레시피 데이터 저장'''
     for res in results:
         try:
             with transaction.atomic():
@@ -40,13 +42,14 @@ def save_recipe(results, tag):
                     ingredient, _ = Ingredient.objects.update_or_create(
                         recipe=recipe, **ing)
                     ingredient.save()
-        except (DatabaseError, TypeError):
+        except (DatabaseError, TypeError, Exception):
             pass
     return
 
 
 @shared_task
 def get_recipe(index):
+    '''레시피 url에서 레시피 크롤링'''
     try:
         response = requests.get(f"{URL}/{index}", headers=headers)
         res = parse_recipe(response.text)
