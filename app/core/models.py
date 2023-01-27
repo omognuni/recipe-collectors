@@ -18,7 +18,7 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    index = models.CharField(max_length=1000, unique=True)
+    index = models.BigIntegerField(unique=True)
     title = models.CharField(max_length=300)
     process = models.TextField(default='')
     tags = models.ManyToManyField('Tag')
