@@ -23,11 +23,13 @@ def get_recipe_url(urls):
 
 
 @shared_task
-def save_recipe(results):
+def save_recipe(results, tag):
     for res in results:
         try:
-            recipe = Recipe.objects.create(
+            recipe, _ = Recipe.objects.update_or_create(
                 index=res['index'], title=res['title'], process=res['process'])
+            tag_obj, _ = Tag.objects.get_or_create(name=tag)
+            recipe.tags.add(tag_obj)
             recipe.save()
             ingredients = res['ingredients']
             for ing in ingredients:
@@ -35,7 +37,6 @@ def save_recipe(results):
                 ingredient.save()
         except (DatabaseError, TypeError):
             pass
-    return True
 
 
 @shared_task

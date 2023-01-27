@@ -10,6 +10,9 @@ class Ingredient(models.Model):
     unit = models.CharField(max_length=100)
     recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
+
 
 class Recipe(models.Model):
     index = models.CharField(max_length=1000, unique=True)
@@ -17,9 +20,15 @@ class Recipe(models.Model):
     process = models.TextField(default='')
     tags = models.ManyToManyField('Tag')
 
+    def __str__(self):
+        return self.title
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
 
 
 class UserManager(BaseUserManager):
