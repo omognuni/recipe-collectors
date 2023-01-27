@@ -2,6 +2,7 @@ from celery import shared_task
 from django.db.utils import DatabaseError
 from django.db import transaction
 import requests
+from requests.exceptions import ConnectionError
 import re
 from core.models import *
 from bs4 import BeautifulSoup
@@ -15,10 +16,12 @@ headers = {
 def get_recipe_url(urls):
     result = []
     for url in urls:
-        response = requests.get(url)
-        res = parse_list(response.text)
-        result += res
-
+        try:
+            response = requests.get(url)
+            res = parse_list(response.text)
+            result += res
+        except ConnectionError:
+            pass
     return {'result': result}
 
 
@@ -44,12 +47,15 @@ def save_recipe(results, tag):
 
 @shared_task
 def get_recipe(index):
-    response = requests.get(f"{URL}/{index}", headers=headers)
-    res = parse_recipe(response.text)
-    if not res:
+    try:
+        response = requests.get(f"{URL}/{index}", headers=headers)
+        res = parse_recipe(response.text)
+        if not res:
+            return
+        res.update({'index': index})
+        return res
+    except ConnectionError:
         return
-    res.update({'index': index})
-    return res
 
 
 def parse_recipe(html):
