@@ -2,17 +2,20 @@ version: "3.9"
 
 services:
   app:
+    image: app
     build:
       context: .
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app
+
     command: >
       sh -c "python manage.py migrate &&
             python manage.py runserver 0.0.0.0:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
+      - SECRET_KEY=${SECRET_KEY}
       - DB_HOST=recipecollector-db
       - DB_NAME=devdb
       - DB_USER=devuser
@@ -46,6 +49,7 @@ services:
 
   celery_worker:
     container_name: celery_worker
+    image: app
     build:
       context: .
       dockerfile: Dockerfile
@@ -62,10 +66,11 @@ services:
     depends_on:
       - app
       - rabbitmq
-    command: sh -c "celery -A recipecollector worker --pool=prefork --concurrency=10 -E --loglevel=info"
+    command: sh -c "celery -A recipecollector worker --pool=prefork --concurrency=10 -E --loglevel=${LOG_LEVEL}"
 
   celery_beat:
     container_name: celery_beat
+    image: app
     build:
       context: .
       dockerfile: Dockerfile
@@ -81,7 +86,7 @@ services:
       - app
       - rabbitmq
       - celery_worker
-    command: sh -c "celery -A recipecollector beat -s /vol/celery/celerybeat-schedule --loglevel=info"
+    command: sh -c "celery -A recipecollector beat -s /vol/celery/celerybeat-schedule --loglevel=${LOG_LEVEL}"
 
 volumes:
   recipe-db-data:
