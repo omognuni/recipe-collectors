@@ -1,8 +1,8 @@
-from celery import shared_task, group
+from celery import shared_task
 from django.db.utils import DatabaseError
+from django.db import transaction
 import requests
 import re
-from datetime import datetime
 from core.models import *
 from bs4 import BeautifulSoup
 
@@ -26,17 +26,20 @@ def get_recipe_url(urls):
 def save_recipe(results, tag):
     for res in results:
         try:
-            recipe, _ = Recipe.objects.update_or_create(
-                index=res['index'], title=res['title'], process=res['process'])
-            tag_obj, _ = Tag.objects.get_or_create(name=tag)
-            recipe.tags.add(tag_obj)
-            recipe.save()
-            ingredients = res['ingredients']
-            for ing in ingredients:
-                ingredient = Ingredient.objects.create(recipe=recipe, **ing)
-                ingredient.save()
+            with transaction.atomic():
+                recipe, _ = Recipe.objects.update_or_create(
+                    index=res['index'], title=res['title'], process=res['process'])
+                tag_obj, _ = Tag.objects.get_or_create(name=tag)
+                recipe.tags.add(tag_obj)
+                recipe.save()
+                ingredients = res['ingredients']
+                for ing in ingredients:
+                    ingredient, _ = Ingredient.objects.update_or_create(
+                        recipe=recipe, **ing)
+                    ingredient.save()
         except (DatabaseError, TypeError):
             pass
+    return
 
 
 @shared_task
@@ -84,7 +87,7 @@ def get_ing(soup):
             number = re.sub('[^0-9/.]', '', tmp[1])
             ingredients.append(
                 {'name': name, 'number': number, 'unit': unit})
-        ingredients.append({'name': name, 'number': '0', 'unit': ''})
+        ingredients.append({'name': name})
 
     return ingredients
 
