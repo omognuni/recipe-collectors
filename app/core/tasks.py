@@ -58,6 +58,23 @@ def get_recipe(index):
         return
 
 
+@shared_task
+def get_recipes(indexes):
+    results = []
+
+    for index in indexes:
+        try:
+            response = requests.get(f"{URL}/{index}", headers=headers)
+            res = parse_recipe(response.text)
+            if not res:
+                continue
+            res.update({'index': index})
+            results.append(res)
+        except ConnectionError:
+            pass
+    return {'results': results}
+
+
 def parse_recipe(html):
     soup = BeautifulSoup(html, "html.parser")
     try:
