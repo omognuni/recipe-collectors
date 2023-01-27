@@ -13,6 +13,9 @@ class Ingredient(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        unique_together = ('recipe', 'name')
+
 
 class Recipe(models.Model):
     index = models.CharField(max_length=1000, unique=True)
