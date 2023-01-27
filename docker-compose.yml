@@ -16,10 +16,10 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
       - SECRET_KEY=${SECRET_KEY}
-      - DB_HOST=recipecollector-db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
       - DB_PORT=5432
       - DEBUG=1
     depends_on:
@@ -58,11 +58,11 @@ services:
       - ./app:/app
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq/
-      - DB_HOST=recipecollector-db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     depends_on:
       - app
       - rabbitmq
@@ -77,11 +77,11 @@ services:
     ports: []
     environment:
       - DJANGO_SETTINGS_MODULE=recipecollector.settings
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq/
-      - DB_HOST=recipecollector-db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     depends_on:
       - app
       - rabbitmq
