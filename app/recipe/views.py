@@ -1,20 +1,12 @@
-from rest_framework import (
-    viewsets,
-    mixins,
-    status,
-)
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
+from django.db.models import Prefetch
+from django.db import transaction
+
+from celery import group
 from core.tasks import *
-from core.models import (
-    Recipe,
-    Tag,
-    Ingredient,
-)
+from core.models import Recipe
 from recipe import serializers
 
 
@@ -25,12 +17,12 @@ class RecipePagination(PageNumberPagination):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    serializer_class = serializers.RecipeSerializer
-    queryset = Recipe.objects.all().prefetch_related('tags', 'ingredient_set')
+    serializer_class = serializers.RecipeDetailSerializer
+    queryset = Recipe.objects.all().prefetch_related(
+        'tags', Prefetch('ingredient_set'))
     pagination_class = RecipePagination
 
     def _url(self, tag, page):
-        page = int(page)
         url = 'https://www.10000recipe.com/recipe'
         return [f"{url}/list.html?q={tag}&order=reco&page={p}" for p in range(page, page+2)]
 
@@ -41,16 +33,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         group_res = group([get_recipe.s(index)
                            for index in indexes['result']])()
         recipes = group_res.join()
-        save_result = save_recipe.delay(recipes, tag)
-        return save_result
+        end = save_recipe.delay(recipes, tag)
+        end.get()
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.RecipeSerializer
+        return self.serializer_class
 
     def get_queryset(self):
         keyword = self.request.query_params.get('search')
-        page = self.request.query_params.get('page')
+        page = int(self.request.query_params.get('page', 1))
         if not keyword:
             return self.queryset
         queryset = self.queryset.filter(tags__name=keyword)
-        if len(queryset) >= RecipePagination.page_size * int(page):
+        if len(queryset) >= RecipePagination.page_size * page:
             return queryset
         self._run_celery_task(keyword, page)
 
