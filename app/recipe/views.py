@@ -22,12 +22,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         'tags', Prefetch('ingredient_set'))
     pagination_class = RecipePagination
 
-    def _url(self, tag, page):
+    def _url(self, tag, start, page):
         url = 'https://www.10000recipe.com/recipe'
-        return [f"{url}/list.html?q={tag}&order=reco&page={p}" for p in range(page, page+2)]
+        return [f"{url}/list.html?q={tag}&order=reco&page={p}" for p in range(start, page+3)]
 
-    def _run_celery_task(self, tag, page):
-        urls = self._url(tag, page)
+    def _run_celery_task(self, tag, start, page):
+        urls = self._url(tag, start, page)
         recipe_urls = get_recipe_url.delay(urls)
         indexes = recipe_urls.get()
         group_res = group([get_recipe.s(index)
@@ -47,8 +47,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if not keyword:
             return self.queryset
         queryset = self.queryset.filter(tags__name=keyword)
-        if len(queryset) >= RecipePagination.page_size * page:
+        start = len(queryset) // RecipePagination.page_size
+        if start >= page:
             return queryset
-        self._run_celery_task(keyword, page)
+        self._run_celery_task(keyword, start, page)
 
         return self.queryset.filter(tags__name=keyword)
