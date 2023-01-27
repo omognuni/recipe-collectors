@@ -9,7 +9,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include(
         [
-            path('user/', include('user.urls')),
+            path('users/', include('user.urls')),
+            path('', include('recipe.urls'))
         ]
     )
     ),
