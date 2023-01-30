@@ -46,3 +46,4 @@
 | ---------------- | ------ | ---------------------------------------------------------------- |
 | recipe 조회      | GET    | api/v1/recipes                                                   |
 | recipe 검색&조회 | GET    | api/v1/recipes/?search={```keyword:str```}&page={```page:int```} |
+| recipe 상세      | GET    | api/v1/recipes/{recipe_id}                                       |

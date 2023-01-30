@@ -46,7 +46,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         keyword = self.request.query_params.get('search')
         # 페이지 없이 검색할 시 기본값으로 1
-        page = self.request.query_params.get('page', 1)
+        page = self.request.query_params.get('page', '1')
         if not page.isdigit():
             return
         page = int(page)
@@ -54,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.queryset
         queryset = self.queryset.filter(tags__name=keyword)
         # queryset 크기가 page*page_size보다 작을 경우 부족한 만큼의 페이지 가져오기
-        start = len(queryset) // RecipePagination.page_size
+        start = len(queryset) // self.pagination_class.page_size
         if start >= page:
             return queryset
         self._run_celery_task(keyword, start, page)
