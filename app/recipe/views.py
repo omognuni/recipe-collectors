@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Prefetch
@@ -45,7 +46,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         keyword = self.request.query_params.get('search')
         # 페이지 없이 검색할 시 기본값으로 1
-        page = int(self.request.query_params.get('page', 1))
+        page = self.request.query_params.get('page', 1)
+        if not page.isdigit():
+            return
+        page = int(page)
         if not keyword:
             return self.queryset
         queryset = self.queryset.filter(tags__name=keyword)
