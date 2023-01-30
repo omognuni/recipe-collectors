@@ -1,11 +1,13 @@
 from celery import shared_task
-from django.db.utils import DatabaseError
-from django.db import transaction
 import requests
 from requests.exceptions import ConnectionError
-import re
-from core.models import *
 from bs4 import BeautifulSoup
+import re
+
+from django.db.utils import DatabaseError
+from django.db import transaction
+
+from core.models import *
 
 URL = 'https://www.10000recipe.com/recipe'
 headers = {
