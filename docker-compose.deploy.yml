@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  app:
+    image: app
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+
+    command: >
+      sh -c "python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=recipecollector.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=5432
+      - DEBUG=1
+    depends_on:
+      - recipecollector-db
+
+  recipecollector-db:
+    image: postgres:13-alpine
+    volumes:
+      - recipe-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=devdb
+      - POSTGRES_USER=devuser
+      - POSTGRES_PASSWORD=changeme
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.7-alpine
+    environment:
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./app:/app
+    expose:
+      - "15672"
+
+  celery_worker:
+    container_name: celery_worker
+    image: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports: []
+    volumes:
+      - ./app:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=recipecollector.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+    depends_on:
+      - app
+      - rabbitmq
+    command: sh -c "celery -A recipecollector worker --pool=prefork --concurrency=10 -E --loglevel=${LOG_LEVEL}"
+
+  celery_beat:
+    container_name: celery_beat
+    image: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports: []
+    environment:
+      - DJANGO_SETTINGS_MODULE=recipecollector.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+    depends_on:
+      - app
+      - rabbitmq
+      - celery_worker
+    command: sh -c "celery -A recipecollector beat -s /vol/celery/celerybeat-schedule --loglevel=${LOG_LEVEL}"
+
+volumes:
+  recipe-db-data:
+
+
