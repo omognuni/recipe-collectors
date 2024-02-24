@@ -1,22 +1,24 @@
-from celery import shared_task
 import requests
+from celery import shared_task
+from recipe.parser import parse_list, parse_recipe
+from recipe.services import save_recipes
 from requests.exceptions import ConnectionError
-from bs4 import BeautifulSoup
-import re
 
-from django.db.utils import DatabaseError
-from django.db import transaction
-
-from core.models import *
-
-URL = 'https://www.10000recipe.com/recipe'
+URL = "https://www.10000recipe.com/recipe"
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Whale/3.18.154.7 Safari/537.36'}
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Whale/3.18.154.7 Safari/537.36"
+}
+
+
+def get_url_by_tag_and_page(tag, start, page):
+    return [
+        f"{URL}/list.html?q={tag}&order=reco&page={p}" for p in range(start, page + 3)
+    ]
 
 
 @shared_task
 def get_recipe_url(urls):
-    '''레시피 목록에서 각 레시피 url 가져오기'''
+    """레시피 목록에서 각 레시피 url 가져오기"""
     result = []
     for url in urls:
         try:
@@ -25,39 +27,23 @@ def get_recipe_url(urls):
             result += res
         except ConnectionError:
             pass
-    return {'result': result}
+    return {"result": result}
 
 
 @shared_task
-def save_recipe(results, tag):
-    '''크롤링한 레시피 데이터 저장'''
-    for res in results:
-        try:
-            with transaction.atomic():
-                recipe, _ = Recipe.objects.update_or_create(
-                    index=res['index'], title=res['title'], process=res['process'])
-                tag_obj, _ = Tag.objects.get_or_create(name=tag)
-                recipe.tags.add(tag_obj)
-                recipe.save()
-                ingredients = res['ingredients']
-                for ing in ingredients:
-                    ingredient, _ = Ingredient.objects.update_or_create(
-                        recipe=recipe, **ing)
-                    ingredient.save()
-        except (DatabaseError, TypeError, Exception):
-            pass
-    return
+def save_recipes_concurrent(results, tag):
+    save_recipes(results, tag)
 
 
 @shared_task
 def get_recipe(index):
-    '''레시피 url에서 레시피 크롤링'''
+    """레시피 url에서 레시피 크롤링"""
     try:
         response = requests.get(f"{URL}/{index}", headers=headers)
         res = parse_recipe(response.text)
         if not res:
             return
-        res.update({'index': index})
+        res.update({"index": index})
         return res
     except ConnectionError:
         return
@@ -73,56 +59,8 @@ def get_recipes(indexes):
             res = parse_recipe(response.text)
             if not res:
                 continue
-            res.update({'index': index})
+            res.update({"index": index})
             results.append(res)
         except ConnectionError:
             pass
-    return {'results': results}
-
-
-def parse_recipe(html):
-    soup = BeautifulSoup(html, "html.parser")
-    try:
-        title = get_title(soup)
-        ingredients = get_ing(soup)
-        process = get_process(soup)
-        return {'title': title, 'process': process, 'ingredients': ingredients}
-    except AttributeError:
-        pass
-
-
-def parse_list(html):
-    soup = BeautifulSoup(html, "html.parser")
-    results = soup.find_all('a', class_='common_sp_link')
-    indexes = [result.attrs['href'].split('/')[-1] for result in results]
-
-    return indexes
-
-
-def get_title(soup):
-    return soup.find('div', class_='view2_summary').find('h3').text
-
-
-def get_ing(soup):
-    ingredients_html = soup.find('div', class_='ready_ingre3').find_all('li')
-    ingredients = []
-    for ingredient in ingredients_html:
-        tmp = ingredient.get_text().replace('\n', '').replace(
-            ' ', '').replace('구매', ',').split(',')
-        name = tmp[0]
-        if len(tmp) > 1:
-            unit = re.sub('[^a-zA-Zㄱ-힗]', '', tmp[1])
-            number = re.sub('[^0-9/.]', '', tmp[1])
-            ingredients.append(
-                {'name': name, 'number': number, 'unit': unit})
-        ingredients.append({'name': name})
-
-    return ingredients
-
-
-def get_process(soup):
-    process_html = soup.find_all('div', 'view_step_cont')
-    process = ''
-    for n in process_html:
-        process += n.get_text().replace('\n', ' ').strip(' ')
-    return process
+    return {"results": results}
