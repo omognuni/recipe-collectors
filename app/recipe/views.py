@@ -1,6 +1,6 @@
 from recipe.pagination import RecipePagination
+from recipe.selectors import get_recipe, get_recipe_list
 from recipe.serializers import RecipeDetailSerializer, RecipeSerializer
-from recipe.services import RecipeService
 from rest_framework import serializers, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,9 +18,7 @@ class RecipeView(APIView):
         filter_serializer = self.FilterSerializer(data=request.data)
         filter_serializer.is_valid(raise_exception=True)
 
-        service = RecipeService()
-
-        recipes = service.get_recipe_list(filters=filter_serializer.validated_data)
+        recipes = get_recipe_list(filters=filter_serializer.validated_data)
 
         output_serializer = self.serializer_class(recipes, many=True)
 
@@ -32,38 +30,10 @@ class RecipeDetailView(APIView):
 
     def get(self, request, pk, *args, **kwargs):
 
-        service = RecipeService()
-
-        recipe = service.get_recipe()
+        recipe = get_recipe()
 
         return Response()
 
-
-# class RecipeViewSet(viewsets.ModelViewSet):
-#     serializer_class = serializers.RecipeDetailSerializer
-#     queryset = Recipe.objects.all().prefetch_related(
-#         'tags', Prefetch('ingredient_set'))
-#     pagination_class = RecipePagination
-
-#     def _url(self, tag, start, page):
-#         url = 'https://www.10000recipe.com/recipe'
-#         return [f"{url}/list.html?q={tag}&order=reco&page={p}" for p in range(start, page+3)]
-
-#     def _run_celery_task(self, tag, start, page):
-#         '''Celery task 실행'''
-#         urls = self._url(tag, start, page)
-#         recipe_urls = get_recipe_url.delay(urls)
-#         indexes = recipe_urls.get()
-#         group_res = group([get_recipe.s(index)
-#                            for index in indexes['result']])()
-#         recipes = group_res.join()
-#         end = save_recipe.delay(recipes, tag)
-#         end.get()
-
-#     def get_serializer_class(self):
-#         if self.action == 'list':
-#             return serializers.RecipeSerializer
-#         return self.serializer_class
 
 #     def get_queryset(self):
 #         keyword = self.request.query_params.get('search')
