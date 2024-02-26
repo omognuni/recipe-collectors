@@ -1,5 +1,5 @@
+from core.run_task import run_celery_task
 from recipe.models import Recipe
-from recipe.run_task import run_celery_task
 
 
 def get_recipe_list(page_size, filters=None):
@@ -7,7 +7,7 @@ def get_recipe_list(page_size, filters=None):
     search = filters.get("search", None)
     page = int(filters.get("page", 1))
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related("tags").all()
     if search is None:
         return queryset
 

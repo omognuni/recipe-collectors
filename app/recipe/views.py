@@ -1,7 +1,7 @@
 from recipe.pagination import RecipePagination
 from recipe.selectors import get_recipe, get_recipe_list
 from recipe.serializers import RecipeDetailSerializer, RecipeSerializer
-from rest_framework import serializers, status, viewsets
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
