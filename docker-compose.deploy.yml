@@ -66,7 +66,7 @@ services:
     depends_on:
       - app
       - rabbitmq
-    command: sh -c "celery -A recipecollector worker --pool=prefork --concurrency=10 -E --loglevel=${LOG_LEVEL}"
+    command: sh -c "celery -A recipecollector worker --pool=prefork --concurrency=2 -E --loglevel=${LOG_LEVEL}"
 
   celery_beat:
     container_name: celery_beat
@@ -90,5 +90,3 @@ services:
 
 volumes:
   recipe-db-data:
-
-
